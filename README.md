@@ -84,6 +84,26 @@ The whole image sits in the amplitudes of one `2·log₂(N)`-qubit register (QPI
 
 Odd outcomes carry `|a₂ᵦ − a₂ᵦ₊₁|`. A cyclic decrement before the Hadamard shifts which pair gets measured, so the even and odd passes cover the in-between boundaries. We drop the wrap edge between the last pixel and the first. Code: [`src/qedge/qhed.py`](src/qedge/qhed.py).
 
+### Circuit diagrams
+
+Drawn from the live Qiskit circuits on a 4×4 step image. Regenerate with `uv run python scripts/draw_circuits.py`.
+
+**QHED (even pass).** QPIE state prep, Hadamard on the axis LSB, measure. Odd outcomes carry the neighbour difference.
+
+![QHED even-pass circuit](results/fig_circuit_qhed.png)
+
+**QHED (odd pass).** Same prep, then a cyclic decrement (`incr_dg`) on the axis before the Hadamard so the pairing shifts by one pixel.
+
+![QHED odd-pass circuit](results/fig_circuit_qhed_odd.png)
+
+**NEQR (horizontal edge).** Hadamards on the position register, multi-controlled loads for the image and its neighbour into `c1` / `c2`, then a Draper subtractor, then measure.
+
+![NEQR horizontal edge circuit](results/fig_circuit_neqr.png)
+
+**Draper subtractor.** Building block that computes `a ← (a − b) mod 2^q` with a QFT phase kickback. Shown here for 3+3 qubits.
+
+![Draper QFT subtractor](results/fig_circuit_draper.png)
+
 ### Classical ground truth and metrics
 
 * Ground truth: Sobel gradient magnitude and Canny binary edges ([`src/qedge/classical.py`](src/qedge/classical.py)).
