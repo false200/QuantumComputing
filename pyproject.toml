@@ -1,7 +1,7 @@
 [project]
 name = "qedge"
 version = "0.1.0"
-description = "Quantum Image Edge Detection using NEQR and QHED: accuracy, shot requirements and noise analysis"
+description = "Quantum image edge detection with NEQR and QHED: accuracy, shot requirements, and noise analysis"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }

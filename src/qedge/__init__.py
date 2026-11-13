@@ -1,7 +1,7 @@
-"""Quantum Image Edge Detection with NEQR and QHED.
+"""Quantum image edge detection with NEQR and QHED.
 
-Accuracy, shot requirements and noise analysis - a head-to-head comparison of
-the NEQR (basis-encoded) and QHED (amplitude-encoded) quantum edge detectors.
+Accuracy, shot requirements, and noise analysis. Head-to-head comparison of the
+NEQR (basis-encoded) and QHED (amplitude-encoded) quantum edge detectors.
 """
 
 from .config import CONFIG, Config

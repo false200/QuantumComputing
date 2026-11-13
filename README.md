@@ -1,6 +1,6 @@
-# QuantumComputing
+# Quantum image edge detection with NEQR and QHED
 
-**Quantum Image Edge Detection Using NEQR and QHED: accuracy, shot requirements and noise analysis.**
+Accuracy, shot requirements, and noise analysis.
 
 Papers on NEQR and QHED like to talk about exponential speed-ups against classical `O(N)` edge detectors. They usually skip the bill.
 
