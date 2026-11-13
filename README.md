@@ -1,46 +1,26 @@
-# QuantumComputing — Quantum Image Edge Detection (NEQR & QHED)
+# QuantumComputing
 
-**Quantum Image Edge Detection Using NEQR and QHED: accuracy, shot requirements
-and noise analysis.**
+**Quantum Image Edge Detection Using NEQR and QHED: accuracy, shot requirements and noise analysis.**
 
-NEQR and QHED quantum edge detectors claim exponential speed-ups over classical
-`O(N)` methods, but these claims ignore **state preparation** and the `O(N)`
-**measurement shots** needed to read out an edge map. They have typically been
-validated only in noise-free simulation or on tiny 2×2–4×4 hardware, and the two
-have rarely been compared head-to-head. **This project closes that gap.**
+Papers on NEQR and QHED like to talk about exponential speed-ups against classical `O(N)` edge detectors. They usually skip the bill.
 
-We implement **both** detectors in Qiskit on **identical** 4×4–32×32 greyscale
-and **BSDS500** images, sweep shot counts, and simulate realistic device noise
-with measurement-error mitigation. Using **F1**, **SSIM** and **end-to-end
-resource counts** (qubits, two-qubit gates, depth, and total shots) we establish
-how many shots each method needs, and how much noise it tolerates, for an
-accurate edge map.
+State preparation costs real gates. Getting a full edge map back still costs `O(N)` measurement shots. A lot of the published demos also stop at noise-free sims or at 2×2 / 4×4 hardware runs, and the two methods almost never sit on the same images with the same metrics.
+
+This repo wires both detectors in Qiskit, feeds them the same 4×4 to 32×32 greyscale and BSDS500 images, sweeps shot counts, and runs a realistic Aer noise model with readout mitigation. We score with F1, SSIM, and end-to-end resource counts (qubits, two-qubit gates, depth, total shots). The question we actually answer is how many shots each method needs, and how much noise it can take, before the edge map falls apart.
 
 ---
 
-## TL;DR findings
+## What we found
 
-Generated automatically into [`results/summary.json`](results/summary.json) and
-the figures below (numbers from our run; reproducible with `qedge all`).
+Numbers come from [`results/summary.json`](results/summary.json) and the figures below. Re-run with `qedge all`.
 
-* **Qubits (theoretical scaling).** QHED (QPIE/amplitude encoding) uses
-  `2·log₂(N_side)` qubits — **4, 6, 8, 10** for 4→32. NEQR (basis encoding)
-  uses `2·log₂(N_side) + 2q` — **20, 22, 24, 26** at `q=8` (two colour
-  registers for the neighbour difference). QHED wins qubits by a wide margin.
-* **State preparation (the hidden cost).** NEQR pays a brutal two-qubit-gate
-  price — **4.1k (4×4) → 19.6k (8×8) → 98.5k (16×16) CX** — because every pixel
-  needs multi-controlled loads. QHED stays at **46 → 242 → 1030 → 4146 CX**
-  for 4→32. This state-prep blow-up is exactly what the speed-up claims ignore.
-* **Shots — the O(N) readout bottleneck.** For QHED, the shots to reach
-  **F1 ≥ 0.99** grow with image size: **256 (8×8) → 512 (16×16) → 1024 (32×32)**
-  — doubling with each side-length doubling. NEQR's basis readout is shot-cheap
-  per pixel on simple shapes, but it still must visit all `O(N)` positions and
-  pays the gate cost above. The asymptotic advantage is eroded either way.
-* **Noise.** QHED is markedly more noise-tolerant: at a 2% two-qubit
-  depolarising level it retains **F1 = 0.978**, while deep NEQR drops to
-  **≈ 0.91**. Tensored readout mitigation barely changes NEQR
-  (**0.905 → 0.905**) because its dominant errors are *gate* errors, not
-  readout — a direct consequence of its circuit depth.
+**Qubits.** QHED (QPIE / amplitude encoding) needs `2·log₂(N_side)` qubits: **4, 6, 8, 10** as the side goes 4→32. NEQR (basis encoding) needs `2·log₂(N_side) + 2q`. At `q=8` that is **20, 22, 24, 26**, because the neighbour difference uses two colour registers. QHED wins on qubit count by a lot.
+
+**State prep.** NEQR's multi-controlled loads pile up fast: **4.1k → 19.6k → 98.5k CX** from 4×4 to 16×16. QHED stays at **46 → 242 → 1030 → 4146 CX** for 4→32. That gate blow-up is the cost the asymptotic claims rarely price in.
+
+**Shots.** For QHED, shots to hit **F1 ≥ 0.99** grow with size: **256 (8×8) → 512 (16×16) → 1024 (32×32)**. Side length doubles, shot budget roughly doubles. NEQR can look cheap per pixel on clean shapes, but it still has to visit all `O(N)` positions and it still pays the gate tax above.
+
+**Noise.** At 2% two-qubit depolarising noise, QHED holds **F1 = 0.978**. Deep NEQR falls to about **0.91**. Tensored readout mitigation barely moves NEQR (**~0.905** either way). The damage is mostly gate error from circuit depth.
 
 ---
 
@@ -48,101 +28,76 @@ the figures below (numbers from our run; reproducible with `qedge all`).
 
 ### Qualitative edge maps
 
-Input / Sobel ground truth / QHED / NEQR on identical 8×8 synthetic images.
+Same 8×8 synthetic inputs. Columns: input, Sobel ground truth, QHED, NEQR.
 
 ![Edge-map montage: input, Sobel, QHED, NEQR](results/fig_montage.png)
 
-### Shot budget vs image size (O(N) readout)
+### Shot budget vs image size
 
-Larger images need more shots to reach the same F1 — the measurement bottleneck.
+Bigger images need more shots for the same F1. That is the readout bottleneck.
 
 ![Shot budget needed grows with image size](results/fig_shot_size.png)
 
 ### Accuracy vs shot budget
 
-Mean F1 and SSIM across the benchmark as a function of shots per circuit.
+Mean F1 and SSIM across the benchmark, plotted against shots per circuit.
 
 ![Edge-map F1 and SSIM vs shot budget](results/fig_shot_sweep.png)
 
 ### Noise tolerance
 
-F1 under depolarising + readout noise, with and without tensored mitigation.
-QHED stays near 0.98; deep NEQR collapses and mitigation barely helps.
+F1 under depolarising + readout noise, raw and mitigated. QHED sits near 0.98. Deep NEQR drops, and mitigation barely rescues it.
 
 ![Noise tolerance with / without readout mitigation](results/fig_noise_sweep.png)
 
 ### Resource scaling
 
-Theoretical qubit counts and transpiled two-qubit-gate counts vs image size.
+Theoretical qubit counts next to transpiled two-qubit-gate counts, by image size.
 
 ![Qubit and two-qubit-gate requirements vs image size](results/fig_resources.png)
 
-Full numeric summary: [`results/summary.json`](results/summary.json).
+Full numeric dump: [`results/summary.json`](results/summary.json).
 
 ---
 
 ## Methods
 
-### NEQR — Novel Enhanced Quantum Representation (basis encoding)
+### NEQR (basis encoding)
 
-A `2ⁿ × 2ⁿ` image is stored as
+A `2ⁿ × 2ⁿ` image lives as
 
 ```
 |I⟩ = (1/2ⁿ) · Σ_{y,x} |c(y,x)⟩ |y⟩ |x⟩
 ```
 
-with a `q`-bit colour register holding each pixel's **exact** intensity in the
-computational basis. State preparation applies, per pixel, a group of
-multi-controlled-X gates — the dominant cost.
+A `q`-bit colour register holds each pixel's exact intensity in the computational basis. Loading the image means multi-controlled-X groups, one group per pixel. That is where the gate count goes.
 
-**Edge detection (quantum-arithmetic differencing).** To get a horizontal
-gradient we entangle *two* colour registers with the same position register:
-`c1 = I(y,x)` and `c2 = I(y,x+1)` (the neighbour image is a classically shifted
-copy — a legitimate NEQR input). A **Draper QFT subtractor** computes
-`c1 ← (I(y,x) − I(y,x+1)) mod 2^q`, so measuring position + `c1` yields the exact
-neighbour difference per pixel. Vertical edges use a vertically shifted copy.
-Boundaries use edge-replicate (clamp) padding. Implemented in
-[`src/qedge/neqr.py`](src/qedge/neqr.py) and
-[`src/qedge/arithmetic.py`](src/qedge/arithmetic.py).
+For a horizontal gradient we wire two colour registers to the same position register: `c1 = I(y,x)` and `c2 = I(y,x+1)`. The neighbour image is a classically shifted copy (still a valid NEQR state). A Draper QFT subtractor does `c1 ← (I(y,x) − I(y,x+1)) mod 2^q`. Measure position plus `c1` and you get the neighbour difference at that pixel. Vertical edges use a vertically shifted copy. Boundaries clamp (edge-replicate). Code: [`src/qedge/neqr.py`](src/qedge/neqr.py), [`src/qedge/arithmetic.py`](src/qedge/arithmetic.py).
 
-### QHED — Quantum Hadamard Edge Detection (amplitude encoding)
+### QHED (amplitude encoding)
 
-The whole image is packed into the amplitudes of a single `2·log₂(N)`-qubit
-register (QPIE). A Hadamard on the least-significant qubit of an axis maps
-neighbouring amplitudes to their sum/difference:
+The whole image sits in the amplitudes of one `2·log₂(N)`-qubit register (QPIE). A Hadamard on the least-significant qubit of an axis turns neighbour amplitudes into sum / difference:
 
 ```
 (a₂ᵦ , a₂ᵦ₊₁)  →  ( (a₂ᵦ + a₂ᵦ₊₁)/√2 , (a₂ᵦ − a₂ᵦ₊₁)/√2 )
 ```
 
-so the odd measurement outcomes carry the pairwise edge `|a₂ᵦ − a₂ᵦ₊₁|`. A
-cyclic **decrement** before the Hadamard shifts the pairing to recover the
-in-between boundaries; the even+odd passes are combined per axis. The
-non-physical wrap boundary (last↔first pixel) is discarded. Implemented in
-[`src/qedge/qhed.py`](src/qedge/qhed.py).
+Odd outcomes carry `|a₂ᵦ − a₂ᵦ₊₁|`. A cyclic decrement before the Hadamard shifts which pair gets measured, so the even and odd passes cover the in-between boundaries. We drop the wrap edge between the last pixel and the first. Code: [`src/qedge/qhed.py`](src/qedge/qhed.py).
 
-### Classical ground truth & metrics
+### Classical ground truth and metrics
 
-* Ground truth: **Sobel** gradient magnitude and **Canny** binary edges
-  ([`src/qedge/classical.py`](src/qedge/classical.py)).
-* **F1**: BSDS-style boundary F-measure with a 1-pixel matching tolerance.
-* **SSIM**: structural similarity between the quantum edge-magnitude map and the
-  Sobel magnitude.
-* **Resources**: qubits, logical/transpiled depth & size, two-qubit-gate count
-  (transpiled to `rz, sx, x, cx`), circuit count and total shots
-  ([`src/qedge/metrics.py`](src/qedge/metrics.py)).
+* Ground truth: Sobel gradient magnitude and Canny binary edges ([`src/qedge/classical.py`](src/qedge/classical.py)).
+* **F1**: BSDS-style boundary F-measure, 1-pixel match tolerance.
+* **SSIM**: quantum edge-magnitude map vs Sobel magnitude.
+* **Resources**: qubits, logical/transpiled depth and size, CX count after transpile to `rz, sx, x, cx`, circuit count, total shots ([`src/qedge/metrics.py`](src/qedge/metrics.py)).
 
-### Noise & mitigation
+### Noise and mitigation
 
-`build_noise_model(level)` ([`src/qedge/noise.py`](src/qedge/noise.py)) builds a
-single-knob model: 1q/2q depolarising errors, thermal relaxation, and symmetric
-readout error. `ReadoutMitigator` performs empirically calibrated **tensored
-(per-qubit) readout mitigation** by contracting each qubit's inverse 2×2
-response against the probability vector (no dense `2ᵏ×2ᵏ` matrix).
+`build_noise_model(level)` in [`src/qedge/noise.py`](src/qedge/noise.py) is one knob: 1q/2q depolarising, thermal relaxation, symmetric readout error. `ReadoutMitigator` calibrates a tensored (per-qubit) readout correction and applies each qubit's inverse 2×2 response to the probability vector. No dense `2ᵏ×2ᵏ` matrix.
 
 ---
 
-## Install & run (uv)
+## Install and run (uv)
 
 ```bash
 # 1. Create the environment (Python 3.12) and install everything
@@ -164,11 +119,9 @@ uv run qedge all --sizes 4 8
 uv run pytest
 ```
 
-Configuration (seed, shot/noise sweeps, image sizes, BSDS500 toggle) lives in
-[`.env`](.env) and is loaded by [`src/qedge/config.py`](src/qedge/config.py).
+Seed, shot/noise sweeps, image sizes, and the BSDS500 toggle live in [`.env`](.env). [`src/qedge/config.py`](src/qedge/config.py) loads them.
 
-BSDS500 is downloaded on demand to `data/` the first time it is needed; if the
-download fails the pipeline falls back to synthetic + scikit-image test images.
+BSDS500 downloads into `data/` on first use. If that fails, the pipeline keeps going on synthetic images plus the scikit-image greyscale set.
 
 ---
 
@@ -197,25 +150,19 @@ data/             # BSDS500 (downloaded) + cache
 
 ---
 
-## Limitations & honest caveats
+## Limits
 
-* NEQR state preparation is simulated with full multi-controlled loads; its
-  gate count grows so fast that we simulate NEQR up to **16×16** and report
-  **32×32** as a resource *projection* (QHED is simulated at all sizes).
-* The "exponential speed-up" is in **qubit count**, not wall-clock: reading a
-  full N-pixel edge map needs `O(N)` shots for **both** methods, which is the
-  central finding.
-* The noise model is representative, not a calibrated replica of a specific
-  device; mitigation is tensored (assumes independent readout errors).
+NEQR state prep with full multi-controlled loads grows so fast that we simulate NEQR through **16×16** and treat **32×32** as a resource projection. QHED runs at every size we plot.
+
+The "exponential" win is in qubit count. Reading an N-pixel edge map still costs `O(N)` shots for both methods. That is the finding we care about.
+
+The noise model is a stand-in, not a fitted copy of one backend. Mitigation is tensored, so it assumes independent readout errors.
 
 ## References
 
-* Zhang et al., *NEQR: a novel enhanced quantum representation of digital
-  images* (2013).
-* Yao et al., *Quantum image processing and its application to edge detection*
-  (QHED), Phys. Rev. X (2017).
-* Arbeláez et al., *Contour Detection and Hierarchical Image Segmentation*
-  (BSDS500), IEEE TPAMI (2011).
+* Zhang et al., *NEQR: a novel enhanced quantum representation of digital images* (2013).
+* Yao et al., *Quantum image processing and its application to edge detection* (QHED), Phys. Rev. X (2017).
+* Arbeláez et al., *Contour Detection and Hierarchical Image Segmentation* (BSDS500), IEEE TPAMI (2011).
 
 ## License
 
