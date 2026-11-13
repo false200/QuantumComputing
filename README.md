@@ -8,6 +8,8 @@ State preparation costs real gates. Getting a full edge map back still costs `O(
 
 This repo wires both detectors in Qiskit, feeds them the same 4×4 to 32×32 greyscale and BSDS500 images, sweeps shot counts, and runs a realistic Aer noise model with readout mitigation. We score with F1, SSIM, and end-to-end resource counts (qubits, two-qubit gates, depth, total shots). The question we actually answer is how many shots each method needs, and how much noise it can take, before the edge map falls apart.
 
+Full walkthrough of the stack, gates, circuits, and experiment loop: **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
 ---
 
 ## What we found
@@ -146,6 +148,8 @@ BSDS500 downloads into `data/` on first use. If that fails, the pipeline keeps g
 ---
 
 ## Repository layout
+
+Architecture write-up (circuits, gates, data flow): [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```
 src/qedge/
