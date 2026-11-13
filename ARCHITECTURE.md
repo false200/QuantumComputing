@@ -255,54 +255,33 @@ Noise sweeps often pin NEQR at 2 colour bits so the density-matrix simulator sta
 
 ---
 
-## Module map
+## End-to-end detector run
 
-```
-src/qedge/
-  config.py       load .env, paths, seed, sweeps
-  images.py       synthetic / standard / BSDS500 loaders
-  classical.py    Sobel, Canny, binarise
-  arithmetic.py   Draper QFT adder / subtractor
-  neqr.py         NEQR encode + neighbour-difference circuit + decode
-  qhed.py         QPIE + Hadamard edge circuits + decode
-  simulate.py     Aer transpile + run
-  noise.py        noise model + tensored readout mitigation
-  metrics.py      F1, SSIM, resource reports
-  detectors.py    run_neqr / run_qhed end-to-end
-  experiments.py  sweeps → CSV
-  figures.py      plots + montage
-  cli.py          qedge smoke|shots|noise|size|all|...
-scripts/
-  draw_circuits.py   circuit PNGs
-  smoke.py           quick manual check
-  finish.py          finish leftover sweeps
-tests/               arithmetic, detectors, metrics, images, noise
-```
+[`src/qedge/detectors.py`](src/qedge/detectors.py) is the glue.
+
+**QHED.** For each axis (`h`, `v`): build even + odd circuits, run each for `shots`, optionally mitigate readout, decode the axis map, then combine magnitudes. Resource report sums four circuits.
+
+**NEQR.** Quantise the float image to `q` bits. For each axis: build the encode + Draper circuit, run, mitigate if asked, decode differences, combine. Resource report sums two circuits (H and V).
+
+Both return a `DetectorResult`: edge map, per-axis maps, and the aggregated `ResourceReport`.
 
 ---
 
-## How to run it yourself
+## Decode details
 
-```bash
-uv venv --python 3.12
-uv sync --extra dev
-uv run qedge smoke          # tiny correctness check
-uv run qedge all --sizes 4 8
-uv run python scripts/draw_circuits.py
-uv run pytest
-```
+**NEQR counts → edge map.** Each shot is a bitstring: colour-diff bits (LSB first) then `px` then `py`. For every visited `(x, y)` we keep a histogram of observed diff values and take the mode (survives sparse readout noise better than a mean). Values `≥ 2^{q-1}` are treated as negative two's-complement. Absolute value becomes the edge strength at that pixel. Unvisited pixels stay 0. Normalise by the map max.
 
-Knobs live in [`.env`](.env): seed, shot list, noise list, image sizes, BSDS500 toggle.
+**QHED counts → edge map.** Index `i = y · 2^n + x`. Split into axis value and orthogonal index. Keep only outcomes where the axis LSB is 1 (odd). Group by `(ortho, axis >> 1)`. Edge amplitude at boundary `2b` (even pass) or `2b+1` (odd pass) is `√(2 · count / shots)`. Skip `pos == size - 1` on the odd pass (cyclic wrap). Normalise, then `√(h² + v²)` across axes.
 
 ---
 
-## Mental model for a third person
+## What the numbers actually show
 
-1. Pick an image. Resize to 8×8 (say).
-2. Classical Sobel / Canny give the "truth" edges.
-3. **QHED path:** pack pixels into amplitudes → Hadamard (and optional decrement) → measure many times → decode odd outcomes into an edge map.
-4. **NEQR path:** superpose positions → load colours with multi-controlled-X → Draper-subtract neighbour → measure → decode differences.
-5. Score both against the classical map. Count qubits, CX, shots.
-6. Repeat while changing shot budget, noise level, and image size.
+From the sweeps on this codebase:
 
-That loop is the whole project. The circuits are real Qiskit objects. The plots in the README are from that loop on this machine.
+* Qubit scaling matches theory: QHED `2n`, NEQR `2n + 2q` (two colour registers).
+* NEQR CX after transpile explodes with size (thousands → tens of thousands by 16×16). QHED stays orders of magnitude lower.
+* QHED shots to F1 ≥ 0.99 grow with size (256 → 512 → 1024 for 8 → 16 → 32). That is the `O(N)` readout cost in practice.
+* At 2% two-qubit depolarising noise, QHED holds F1 ≈ 0.978. Deep NEQR falls to ≈ 0.91. Tensored readout mitigation barely moves NEQR, because gate error dominates.
+
+Those are the claims the architecture is built to measure.
