@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# uv / virtual env
+.venv/
+
+# Datasets (large; downloaded on demand) - keep the folder, drop its contents
+data/*
+!data/.gitkeep
+
+# Keep results (CSVs + figures) but drop transient logs
+results/run.log
+
+# OS
+.DS_Store
+Thumbs.db

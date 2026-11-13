@@ -1,0 +1,9 @@
+experiment,method,image,size,shots,feasible,color_bits,precision,recall,f1,ssim,num_qubits,two_qubit_gates,depth_basis,size_basis,circuits,total_shots,predicted_qubits
+size_sweep,QHED,disk,4,4096,True,,1.0,1.0,1.0,0.33903184904285477,4.0,46.0,40.0,204.0,4.0,16384.0,
+size_sweep,NEQR,disk,4,4096,True,8.0,1.0,1.0,1.0,0.33872249170098534,20.0,4136.0,4832.0,11211.0,2.0,8192.0,
+size_sweep,QHED,disk,8,4096,True,,1.0,1.0,1.0,0.5325050089491328,6.0,242.0,192.0,844.0,4.0,16384.0,
+size_sweep,NEQR,disk,8,4096,True,6.0,1.0,1.0,1.0,0.5693974124634413,18.0,19604.0,25742.0,54546.0,2.0,8192.0,
+size_sweep,QHED,disk,16,4096,True,,1.0,1.0,1.0,0.4325010031655757,8.0,1030.0,824.0,3370.0,4.0,16384.0,
+size_sweep,NEQR,disk,16,4096,True,4.0,1.0,1.0,1.0,0.47793130697860503,16.0,98480.0,136191.0,287942.0,2.0,8192.0,
+size_sweep,QHED,disk,32,4096,True,,1.0,1.0,1.0,0.47263413926894726,10.0,4146.0,3276.0,13112.0,4.0,16384.0,
+size_sweep,NEQR,disk,32,4096,False,,,,,,,,,,,,12.0

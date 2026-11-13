@@ -1,0 +1,45 @@
+[project]
+name = "qedge"
+version = "0.1.0"
+description = "Quantum Image Edge Detection using NEQR and QHED: accuracy, shot requirements and noise analysis"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "QCA Endsem" }]
+
+dependencies = [
+    "qiskit>=1.2,<2.0",
+    "qiskit-aer>=0.15",
+    "numpy>=1.26,<2.2",
+    "scipy>=1.11",
+    "scikit-image>=0.22",
+    "matplotlib>=3.8",
+    "pillow>=10.0",
+    "pandas>=2.1",
+    "tqdm>=4.66",
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+qedge = "qedge.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qedge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::PendingDeprecationWarning",
+    "ignore::DeprecationWarning",
+]

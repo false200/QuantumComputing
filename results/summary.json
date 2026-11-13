@@ -1,0 +1,60 @@
+{
+  "shots_to_f1_0.9_small_images": {
+    "NEQR": 256,
+    "QHED": 256
+  },
+  "shots_to_f1_0.99_by_size": {
+    "NEQR": {
+      "8": 256,
+      "16": 256
+    },
+    "QHED": {
+      "8": 256,
+      "16": 512,
+      "32": 1024
+    }
+  },
+  "f1_at_max_noise": {
+    "noise_level": 0.02,
+    "f1": {
+      "NEQR_raw": 0.9114,
+      "NEQR_mitigated": 0.9046,
+      "QHED_raw": 0.9778,
+      "QHED_mitigated": 0.9778
+    }
+  },
+  "resources": {
+    "QHED": {
+      "4": {
+        "qubits": 4,
+        "two_qubit_gates": 46
+      },
+      "8": {
+        "qubits": 6,
+        "two_qubit_gates": 242
+      },
+      "16": {
+        "qubits": 8,
+        "two_qubit_gates": 1030
+      },
+      "32": {
+        "qubits": 10,
+        "two_qubit_gates": 4146
+      }
+    },
+    "NEQR": {
+      "4": {
+        "qubits": 20,
+        "two_qubit_gates": 4136
+      },
+      "8": {
+        "qubits": 18,
+        "two_qubit_gates": 19604
+      },
+      "16": {
+        "qubits": 16,
+        "two_qubit_gates": 98480
+      }
+    }
+  }
+}
