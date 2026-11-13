@@ -42,11 +42,42 @@ the figures below (numbers from our run; reproducible with `qedge all`).
   (**0.905 → 0.905**) because its dominant errors are *gate* errors, not
   readout — a direct consequence of its circuit depth.
 
-Figures: [`results/fig_shot_size.png`](results/fig_shot_size.png) (O(N) shots),
-[`results/fig_shot_sweep.png`](results/fig_shot_sweep.png),
-[`results/fig_noise_sweep.png`](results/fig_noise_sweep.png),
-[`results/fig_resources.png`](results/fig_resources.png),
-[`results/fig_montage.png`](results/fig_montage.png).
+---
+
+## Results
+
+### Qualitative edge maps
+
+Input / Sobel ground truth / QHED / NEQR on identical 8×8 synthetic images.
+
+![Edge-map montage: input, Sobel, QHED, NEQR](results/fig_montage.png)
+
+### Shot budget vs image size (O(N) readout)
+
+Larger images need more shots to reach the same F1 — the measurement bottleneck.
+
+![Shot budget needed grows with image size](results/fig_shot_size.png)
+
+### Accuracy vs shot budget
+
+Mean F1 and SSIM across the benchmark as a function of shots per circuit.
+
+![Edge-map F1 and SSIM vs shot budget](results/fig_shot_sweep.png)
+
+### Noise tolerance
+
+F1 under depolarising + readout noise, with and without tensored mitigation.
+QHED stays near 0.98; deep NEQR collapses and mitigation barely helps.
+
+![Noise tolerance with / without readout mitigation](results/fig_noise_sweep.png)
+
+### Resource scaling
+
+Theoretical qubit counts and transpiled two-qubit-gate counts vs image size.
+
+![Qubit and two-qubit-gate requirements vs image size](results/fig_resources.png)
+
+Full numeric summary: [`results/summary.json`](results/summary.json).
 
 ---
 
